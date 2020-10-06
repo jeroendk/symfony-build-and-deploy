@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  php:
+    build: 
+      context: build/php    
+      shm_size: '512m'    
+    volumes:
+      - ./:/var/www/html/symfony
+
+  web:
+    build: build/nginx
+    ports:
+        - '80:80'   
+    volumes:
+      - ./:/var/www/html/symfony
+      
+  db:
+    image: mysql:5.7
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: 'docker'
+      MYSQL_DATABASE: 'symfony'
+      MYSQL_USER: 'symfony'
+      MYSQL_PASSWORD: 'docker'
+    volumes:
+      - ./build/mysql:/var/lib/mysql
+
+  phpmyadmin:
+    image: 'phpmyadmin/phpmyadmin'
+    ports:
+       - '81:80'
+    links:
+        - db:mysql
+    environment:
+        MYSQL_USERNAME: root
+        MYSQL_ROOT_PASSWORD: docker
+        PMA_HOST: mysql
