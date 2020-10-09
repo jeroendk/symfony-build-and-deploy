@@ -52,8 +52,37 @@ jobs: # a collection of steps
       - run: php -d memory_limit=-1 vendor/bin/phpstan analyse src --level max
       - run: php -d memory_limit=-1 vendor/bin/simple-phpunit
 
+  deploy:
+    docker:
+      - image: circleci/php:7.4-browsers
+    working_directory: ~/symfony
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "5c:d4:86:b8:f4:fa:fd:05:b6:1a:8d:21:15:69:79:f9"
+      - run:
+          name: Install Deployer
+          command: |
+            curl -LO https://deployer.org/deployer.phar
+            sudo mv deployer.phar /usr/local/bin/dep
+            sudo chmod +x /usr/local/bin/dep
+      - run:
+          name: Deploy
+          command: |
+            echo '|1|o6ixDeDYnH2RtzN6cRMAdmtIy+8=|xtbEa6oj4yN81uF+f5gbKJqcmc8= ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA1ggVkrJj1FHALz8de+DHxEuPBmDAq38QHZA8pe4FQ5' >> ~/.ssh/known_hosts
+            echo '|1|Bn6fOv+RZgYmpk+if4vAlUrvnCs=|4lSJFolux/OvPEjFzKyVZq0fDRs= ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCbmrvTs5eGylvG/kSESlzmI8QTeT1b/FssMVrAAeD/9oc9caVR+2YXGzCjGvGRo1mYKVe7fpbt5E8inN3MVnAM7kD7iVmGb4mX4KG2m29YOSlstYoGdAFGHtb+oDZb7nJTNns5FiYk85DhfiQzWdPMHEi2LrOVY7QBqeDDPhJC2buP3NII0v+TxLY+PT++oOeXidRfI1RFHF45mKAturqEA4d1OTmt46ab+Op0HVXq7ivnCx75GJyVWGRuxqen1N4emn6juyFdyyShgSMs4O/nqSPp2HZeEpvLzdCSTuY5Rgq/zsXo1FwKhTUYMK5loiC+JVb/pyr/6ypl02i1A/x9' >> ~/.ssh/known_hosts
+            echo '|1|1NWpzyQ4bNXUuXbU7RLpbEEudI0=|7l+7Xg2NnENvLJQRsrDclS+CSCM= ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBNFqdYqP/d6P14hiq7q4GZTSXENV5D9jfVqSf5vqSZ8EP3/8wzRIieCa8W05RdYwl1AaFXLRCd93itO1r2A9adY=' >> ~/.ssh/known_hosts
+            dep deploy
+
 workflows:
   version: 2
   notify_deploy:
     jobs:
       - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: develop
